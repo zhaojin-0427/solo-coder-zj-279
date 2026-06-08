@@ -1,0 +1,14 @@
+{
+  "name": "baking-recipe-community",
+  "version": "1.0.0",
+  "description": "手工烘焙食谱管理与社区接龙系统",
+  "private": true,
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd server && npm run build && cd ../client && npm run build"
+  },
+  "author": "",
+  "license": "MIT"
+}
