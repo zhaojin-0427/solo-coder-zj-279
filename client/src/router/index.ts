@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useUserStore } from '@/stores/user'
 import MainLayout from '@/layouts/MainLayout.vue'
 
 const routes = [
@@ -47,7 +46,8 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  const { useUserStore } = await import('@/stores/user')
   const userStore = useUserStore()
   userStore.initUser()
   next()

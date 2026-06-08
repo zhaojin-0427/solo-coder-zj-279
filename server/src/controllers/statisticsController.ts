@@ -40,6 +40,8 @@ export const createStatisticsController = (db: Database) => {
       { name: '已失效', value: expiredCount }
     ]
 
+    const orderStatusDistribution = [...transactionRate]
+
     const durationTrend = [
       { date: '06/02', duration: 52 },
       { date: '06/03', duration: 48 },
@@ -58,12 +60,12 @@ export const createStatisticsController = (db: Database) => {
         return acc
       }, {})
     const repeatCount = Object.values(repeatUsers).filter(c => c > 1).length
-    const repurchaseRate = uniqueUsers > 0 ? Math.round((repeatCount / uniqueUsers) * 1000) / 10 : 60.5
+    const repurchaseRate = uniqueUsers > 0 ? repeatCount / uniqueUsers : 0
 
     const waitlistedOrders = db.orders.filter(o => o.status === 'waitlisted' || o.promotedAt)
     const promotedOrders = db.orders.filter(o => o.promotedAt && o.status !== 'waitlisted')
     const waitlistConversionRate = waitlistedOrders.length > 0
-      ? Math.round((promotedOrders.length / waitlistedOrders.length) * 1000) / 10
+      ? promotedOrders.length / waitlistedOrders.length
       : 0
 
     const allCompletedOrders = db.orders.filter(o => o.status === 'completed')
@@ -75,7 +77,7 @@ export const createStatisticsController = (db: Database) => {
       return pickedAt <= pickupTime + 30 * 60 * 1000
     })
     const onTimeDeliveryRate = allCompletedOrders.length > 0
-      ? Math.round((onTimeDelivered.length / allCompletedOrders.length) * 1000) / 10
+      ? onTimeDelivered.length / allCompletedOrders.length
       : 0
 
     const allTimeSlots: { total: number; filled: number }[] = []
@@ -87,23 +89,46 @@ export const createStatisticsController = (db: Database) => {
     const totalSlotCapacity = allTimeSlots.reduce((s, t) => s + t.total, 0)
     const totalSlotFilled = allTimeSlots.reduce((s, t) => s + t.filled, 0)
     const timeSlotFulfillmentRate = totalSlotCapacity > 0
-      ? Math.round((totalSlotFilled / totalSlotCapacity) * 1000) / 10
+      ? totalSlotFilled / totalSlotCapacity
       : 0
 
-    const recipeCapacityUtilization = db.recipes.map(r => {
+    const recipeCapacityUtilization: Record<string, number> = {}
+    db.recipes.forEach(r => {
       const relatedGbs = db.groupBuys.filter(g => g.recipeId === r.id)
       const capacity = relatedGbs.reduce((s, g) => s + g.maxQuantity * g.dailyBatches, 0)
       const utilized = db.orders.filter(o => {
         const gb = db.groupBuys.find(g => g.id === o.groupBuyId)
         return gb?.recipeId === r.id && o.status !== 'cancelled' && o.status !== 'expired'
       }).reduce((s, o) => s + o.quantity, 0)
-      return {
-        name: r.name,
-        rate: capacity > 0 ? Math.round((utilized / capacity) * 1000) / 10 : 0,
-        utilized,
-        capacity
+      recipeCapacityUtilization[r.name] = capacity > 0 ? utilized / capacity : 0
+    })
+
+    const totalUsers = db.users.length
+    const totalReviews = db.reviews.length
+    const avgRating = totalReviews > 0
+      ? db.reviews.reduce((s, r) => s + r.rating, 0) / totalReviews
+      : 0
+
+    const slotDistribution = db.groupBuys.flatMap(gb => {
+      const shortTitle = gb.title.length > 6 ? gb.title.slice(0, 6) : gb.title
+      return gb.timeSlots.map(ts => ({
+        name: `${shortTitle} ${ts.time}`,
+        filled: ts.filled,
+        capacity: ts.capacity
+      }))
+    })
+
+    const recipeSalesMap: Record<string, number> = {}
+    db.orders.forEach(o => {
+      const gb = db.groupBuys.find(g => g.id === o.groupBuyId)
+      const recipe = db.recipes.find(r => r.id === gb?.recipeId)
+      if (recipe && o.status !== 'cancelled' && o.status !== 'expired') {
+        recipeSalesMap[recipe.name] = (recipeSalesMap[recipe.name] || 0) + o.totalAmount
       }
-    }).sort((a, b) => b.rate - a.rate)
+    })
+    const recipeSales = Object.entries(recipeSalesMap)
+      .map(([name, amount]) => ({ name, amount }))
+      .sort((a, b) => b.amount - a.amount)
 
     const statistics: Statistics = {
       popularity,
@@ -114,10 +139,17 @@ export const createStatisticsController = (db: Database) => {
       totalGroupBuys,
       totalOrders,
       totalRevenue,
+      totalUsers,
+      totalReviews,
+      avgRating,
+      completedOrders: completedCount,
       waitlistConversionRate,
       onTimeDeliveryRate,
       timeSlotFulfillmentRate,
-      recipeCapacityUtilization
+      recipeCapacityUtilization,
+      orderStatusDistribution,
+      slotDistribution,
+      recipeSales
     }
 
     res.json(statistics)

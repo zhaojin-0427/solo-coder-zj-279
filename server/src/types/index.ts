@@ -97,10 +97,17 @@ export interface Statistics {
   totalGroupBuys: number
   totalOrders: number
   totalRevenue: number
+  totalUsers: number
+  totalReviews: number
+  avgRating: number
+  completedOrders: number
   waitlistConversionRate: number
   onTimeDeliveryRate: number
   timeSlotFulfillmentRate: number
-  recipeCapacityUtilization: { name: string; rate: number; utilized: number; capacity: number }[]
+  recipeCapacityUtilization: Record<string, number>
+  orderStatusDistribution: { name: string; value: number }[]
+  slotDistribution: { name: string; filled: number; capacity: number }[]
+  recipeSales: { name: string; amount: number }[]
 }
 
 export interface Database {
