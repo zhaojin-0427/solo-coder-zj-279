@@ -1,5 +1,5 @@
 import request from './index'
-import type { Review } from '@/types'
+import type { Review, Order } from '@/types'
 
 export interface CreateReviewDto {
   orderId: number
@@ -7,6 +7,11 @@ export interface CreateReviewDto {
   userName: string
   rating: number
   content: string
+}
+
+export interface ReviewEligibility {
+  eligible: boolean
+  reason?: string
 }
 
 export const getReviews = () => {
@@ -19,6 +24,14 @@ export const getReview = (id: number) => {
 
 export const getReviewsByUser = (userId: number) => {
   return request.get<any, Review[]>(`/reviews/user/${userId}`)
+}
+
+export const getEligibleOrdersForReview = (userId: number) => {
+  return request.get<any, Order[]>('/reviews/eligible/:userId'.replace(':userId', String(userId)))
+}
+
+export const checkReviewEligibility = (orderId: number) => {
+  return request.get<any, ReviewEligibility>(`/reviews/eligibility/${orderId}`)
 }
 
 export const createReview = (data: CreateReviewDto) => {

@@ -22,6 +22,13 @@ export interface Recipe {
 
 export type PaymentMethod = 'wechat' | 'alipay' | 'cash' | 'bank_transfer'
 
+export interface TimeSlot {
+  id: number
+  time: string
+  capacity: number
+  filled: number
+}
+
 export interface GroupBuy {
   id: number
   recipeId: number
@@ -29,13 +36,28 @@ export interface GroupBuy {
   title: string
   maxQuantity: number
   currentQuantity: number
+  waitlistQuantity: number
   pickupTime: string
+  productionDeadline: string
+  dailyBatches: number
+  allowWaitlist: boolean
+  timeSlots: TimeSlot[]
+  selectedTimeSlotId?: number
   paymentMethod: PaymentMethod
   status: 'active' | 'closed' | 'completed'
   unitPrice: number
   createdAt: string
   updatedAt: string
 }
+
+export type OrderStatus =
+  | 'pending_payment'
+  | 'waitlisted'
+  | 'to_produce'
+  | 'pending_pickup'
+  | 'completed'
+  | 'cancelled'
+  | 'expired'
 
 export interface Order {
   id: number
@@ -46,7 +68,11 @@ export interface Order {
   phone: string
   quantity: number
   totalAmount: number
-  status: 'pending' | 'paid' | 'completed' | 'cancelled'
+  status: OrderStatus
+  waitlistPosition?: number
+  promotedAt?: string
+  pickedUpAt?: string
+  timeSlotId?: number
   createdAt: string
   updatedAt: string
 }
@@ -71,6 +97,10 @@ export interface Statistics {
   totalGroupBuys: number
   totalOrders: number
   totalRevenue: number
+  waitlistConversionRate: number
+  onTimeDeliveryRate: number
+  timeSlotFulfillmentRate: number
+  recipeCapacityUtilization: { name: string; rate: number; utilized: number; capacity: number }[]
 }
 
 export interface Database {
@@ -97,6 +127,10 @@ export interface CreateGroupBuyDto {
   title: string
   maxQuantity: number
   pickupTime: string
+  productionDeadline: string
+  dailyBatches: number
+  allowWaitlist: boolean
+  timeSlots: { time: string; capacity: number }[]
   paymentMethod: PaymentMethod
   unitPrice: number
 }
@@ -106,6 +140,7 @@ export interface CreateOrderDto {
   userName: string
   phone: string
   quantity: number
+  timeSlotId?: number
 }
 
 export interface CreateReviewDto {

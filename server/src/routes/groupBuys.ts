@@ -10,6 +10,7 @@ export const createGroupBuyRouter = (db: Database) => {
   router.get('/:id', controller.getGroupBuyById)
   router.post('/', controller.createGroupBuy)
   router.put('/:id/close', controller.closeGroupBuy)
+  router.put('/:id/expand', controller.expandCapacity)
 
   return router
 }

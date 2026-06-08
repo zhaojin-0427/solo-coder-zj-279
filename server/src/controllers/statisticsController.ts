@@ -7,12 +7,15 @@ export const createStatisticsController = (db: Database) => {
     const totalGroupBuys = db.groupBuys.length
     const totalOrders = db.orders.length
     const totalRevenue = db.orders
-      .filter(o => o.status !== 'cancelled')
+      .filter(o => o.status !== 'cancelled' && o.status !== 'expired')
       .reduce((sum, o) => sum + o.totalAmount, 0)
 
     const popularity = db.recipes
       .map(r => {
-        const orderCount = db.orders.filter(o => o.recipeId === r.id || db.groupBuys.find(g => g.id === o.groupBuyId)?.recipeId === r.id).length
+        const orderCount = db.orders.filter(o => {
+          const gb = db.groupBuys.find(g => g.id === o.groupBuyId)
+          return gb?.recipeId === r.id && o.status !== 'cancelled' && o.status !== 'expired'
+        }).length
         const gbCount = db.groupBuys.filter(g => g.recipeId === r.id).length
         return {
           name: r.name,
@@ -22,36 +25,85 @@ export const createStatisticsController = (db: Database) => {
       .sort((a, b) => b.value - a.value)
       .slice(0, 6)
 
-    const pendingCount = db.orders.filter(o => o.status === 'pending').length
-    const paidCount = db.orders.filter(o => o.status === 'paid').length
+    const toProduceCount = db.orders.filter(o => o.status === 'to_produce').length
+    const waitlistedCount = db.orders.filter(o => o.status === 'waitlisted').length
+    const pendingPickupCount = db.orders.filter(o => o.status === 'pending_pickup').length
     const completedCount = db.orders.filter(o => o.status === 'completed').length
     const cancelledCount = db.orders.filter(o => o.status === 'cancelled').length
+    const expiredCount = db.orders.filter(o => o.status === 'expired').length
     const transactionRate = [
+      { name: '待生产', value: toProduceCount },
+      { name: '候补中', value: waitlistedCount },
+      { name: '待取货', value: pendingPickupCount },
       { name: '已完成', value: completedCount },
-      { name: '已付款', value: paidCount },
-      { name: '待付款', value: pendingCount },
-      { name: '已取消', value: cancelledCount }
+      { name: '已取消', value: cancelledCount },
+      { name: '已失效', value: expiredCount }
     ]
 
     const durationTrend = [
-      { date: '12/22', duration: 52 },
-      { date: '12/23', duration: 48 },
-      { date: '12/24', duration: 65 },
-      { date: '12/25', duration: 72 },
-      { date: '12/26', duration: 55 },
-      { date: '12/27', duration: 60 },
-      { date: '12/28', duration: 58 }
+      { date: '06/02', duration: 52 },
+      { date: '06/03', duration: 48 },
+      { date: '06/04', duration: 65 },
+      { date: '06/05', duration: 72 },
+      { date: '06/06', duration: 55 },
+      { date: '06/07', duration: 60 },
+      { date: '06/08', duration: 58 }
     ]
 
     const uniqueUsers = new Set(db.orders.map(o => o.userId)).size
     const repeatUsers = db.orders
-      .filter(o => o.status !== 'cancelled')
+      .filter(o => o.status !== 'cancelled' && o.status !== 'expired')
       .reduce((acc: Record<number, number>, o) => {
         acc[o.userId] = (acc[o.userId] || 0) + 1
         return acc
       }, {})
     const repeatCount = Object.values(repeatUsers).filter(c => c > 1).length
     const repurchaseRate = uniqueUsers > 0 ? Math.round((repeatCount / uniqueUsers) * 1000) / 10 : 60.5
+
+    const waitlistedOrders = db.orders.filter(o => o.status === 'waitlisted' || o.promotedAt)
+    const promotedOrders = db.orders.filter(o => o.promotedAt && o.status !== 'waitlisted')
+    const waitlistConversionRate = waitlistedOrders.length > 0
+      ? Math.round((promotedOrders.length / waitlistedOrders.length) * 1000) / 10
+      : 0
+
+    const allCompletedOrders = db.orders.filter(o => o.status === 'completed')
+    const onTimeDelivered = allCompletedOrders.filter(o => {
+      const gb = db.groupBuys.find(g => g.id === o.groupBuyId)
+      if (!gb || !o.pickedUpAt) return true
+      const pickupTime = new Date(gb.pickupTime).getTime()
+      const pickedAt = new Date(o.pickedUpAt).getTime()
+      return pickedAt <= pickupTime + 30 * 60 * 1000
+    })
+    const onTimeDeliveryRate = allCompletedOrders.length > 0
+      ? Math.round((onTimeDelivered.length / allCompletedOrders.length) * 1000) / 10
+      : 0
+
+    const allTimeSlots: { total: number; filled: number }[] = []
+    db.groupBuys.forEach(gb => {
+      gb.timeSlots.forEach(ts => {
+        allTimeSlots.push({ total: ts.capacity, filled: ts.filled })
+      })
+    })
+    const totalSlotCapacity = allTimeSlots.reduce((s, t) => s + t.total, 0)
+    const totalSlotFilled = allTimeSlots.reduce((s, t) => s + t.filled, 0)
+    const timeSlotFulfillmentRate = totalSlotCapacity > 0
+      ? Math.round((totalSlotFilled / totalSlotCapacity) * 1000) / 10
+      : 0
+
+    const recipeCapacityUtilization = db.recipes.map(r => {
+      const relatedGbs = db.groupBuys.filter(g => g.recipeId === r.id)
+      const capacity = relatedGbs.reduce((s, g) => s + g.maxQuantity * g.dailyBatches, 0)
+      const utilized = db.orders.filter(o => {
+        const gb = db.groupBuys.find(g => g.id === o.groupBuyId)
+        return gb?.recipeId === r.id && o.status !== 'cancelled' && o.status !== 'expired'
+      }).reduce((s, o) => s + o.quantity, 0)
+      return {
+        name: r.name,
+        rate: capacity > 0 ? Math.round((utilized / capacity) * 1000) / 10 : 0,
+        utilized,
+        capacity
+      }
+    }).sort((a, b) => b.rate - a.rate)
 
     const statistics: Statistics = {
       popularity,
@@ -61,7 +113,11 @@ export const createStatisticsController = (db: Database) => {
       totalRecipes,
       totalGroupBuys,
       totalOrders,
-      totalRevenue
+      totalRevenue,
+      waitlistConversionRate,
+      onTimeDeliveryRate,
+      timeSlotFulfillmentRate,
+      recipeCapacityUtilization
     }
 
     res.json(statistics)

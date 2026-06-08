@@ -1,15 +1,23 @@
 <template>
   <el-card class="groupbuy-card" shadow="hover">
     <div class="card-header">
-      <el-tag :type="statusType" effect="light" size="small" round>
-        {{ statusText }}
-      </el-tag>
+      <div class="status-wrap">
+        <el-tag :type="statusType" effect="light" size="small" round>
+          {{ statusText }}
+        </el-tag>
+        <el-tag v-if="groupBuy.allowWaitlist && groupBuy.waitlistQuantity > 0" type="warning" effect="plain" size="small" round style="margin-left: 6px">
+          候补 {{ groupBuy.waitlistQuantity }} 份
+        </el-tag>
+      </div>
       <span class="price">¥{{ groupBuy.unitPrice }} / 份</span>
     </div>
     <h3 class="gb-title">{{ groupBuy.title }}</h3>
     <div class="gb-recipe" v-if="groupBuy.recipe">
       <el-image :src="groupBuy.recipe.imageUrl" class="recipe-thumb" fit="cover" />
-      <span class="recipe-name">{{ groupBuy.recipe.name }}</span>
+      <div class="recipe-meta">
+        <span class="recipe-name">{{ groupBuy.recipe.name }}</span>
+        <span class="recipe-duration">制作 {{ groupBuy.recipe.duration }} 分钟 · 保存 {{ groupBuy.recipe.shelfLife }}</span>
+      </div>
     </div>
     <div class="progress-bar">
       <div class="progress-inner" :style="{ width: progressPercent + '%' }"></div>
@@ -24,8 +32,33 @@
         <span>取货: {{ formatTime(groupBuy.pickupTime) }}</span>
       </div>
       <div class="info-item">
+        <el-icon color="#D4865A"><Timer /></el-icon>
+        <span>截止: {{ formatTime(groupBuy.productionDeadline) }}</span>
+      </div>
+      <div class="info-item">
+        <el-icon color="#D4865A"><Goods /></el-icon>
+        <span>每日 {{ groupBuy.dailyBatches }} 批次</span>
+      </div>
+      <div class="info-item">
         <el-icon color="#D4865A"><Wallet /></el-icon>
         <span>{{ paymentText }}</span>
+      </div>
+    </div>
+    <div v-if="groupBuy.timeSlots && groupBuy.timeSlots.length > 0" class="time-slots">
+      <div class="slots-title">
+        <el-icon color="#D4865A"><Calendar /></el-icon>
+        <span>取货时段</span>
+      </div>
+      <div class="slots-list">
+        <el-tag
+          v-for="ts in groupBuy.timeSlots"
+          :key="ts.id"
+          :type="ts.filled >= ts.capacity ? 'info' : 'success'"
+          effect="light"
+          size="small"
+        >
+          {{ ts.time }} ({{ ts.filled }}/{{ ts.capacity }})
+        </el-tag>
       </div>
     </div>
     <div class="card-actions">
@@ -45,6 +78,14 @@
       >
         截单
       </el-button>
+      <el-button
+        v-if="groupBuy.waitlistQuantity > 0 || groupBuy.status === 'closed'"
+        type="success"
+        plain
+        @click="$emit('expand', groupBuy)"
+      >
+        扩容
+      </el-button>
     </div>
   </el-card>
 </template>
@@ -60,6 +101,7 @@ const props = defineProps<{
 defineEmits<{
   (e: 'order', groupBuy: GroupBuy): void
   (e: 'close', groupBuy: GroupBuy): void
+  (e: 'expand', groupBuy: GroupBuy): void
 }>()
 
 const progressPercent = computed(() => {
@@ -119,6 +161,11 @@ const formatTime = (t: string) => {
   margin-bottom: 10px;
 }
 
+.status-wrap {
+  display: flex;
+  align-items: center;
+}
+
 .price {
   font-size: 16px;
   font-weight: 600;
@@ -148,9 +195,21 @@ const formatTime = (t: string) => {
   border-radius: 6px;
 }
 
+.recipe-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .recipe-name {
   font-size: 13px;
   color: #5D3A2A;
+  font-weight: 500;
+}
+
+.recipe-duration {
+  font-size: 11px;
+  color: #B8917A;
 }
 
 .progress-bar {
@@ -180,7 +239,7 @@ const formatTime = (t: string) => {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .info-item {
@@ -191,12 +250,37 @@ const formatTime = (t: string) => {
   color: #8B5A3C;
 }
 
+.time-slots {
+  background: #FFF8F0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.slots-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #5D3A2A;
+  margin-bottom: 8px;
+}
+
+.slots-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .card-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .card-actions .el-button {
   flex: 1;
+  min-width: 80px;
 }
 </style>

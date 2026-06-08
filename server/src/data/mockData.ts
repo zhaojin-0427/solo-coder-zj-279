@@ -111,25 +111,41 @@ export const mockData: Database = {
       title: '本周六黄油曲奇接龙',
       maxQuantity: 30,
       currentQuantity: 18,
-      pickupTime: '2024-12-28T15:00:00',
+      waitlistQuantity: 2,
+      pickupTime: '2026-06-10T15:00:00',
+      productionDeadline: '2026-06-10T10:00:00',
+      dailyBatches: 3,
+      allowWaitlist: true,
+      timeSlots: [
+        { id: 1, time: '14:00', capacity: 15, filled: 8 },
+        { id: 2, time: '16:00', capacity: 15, filled: 10 }
+      ],
       paymentMethod: 'wechat',
       status: 'active',
       unitPrice: 38,
-      createdAt: '2024-12-20T10:00:00',
-      updatedAt: '2024-12-20T10:00:00'
+      createdAt: '2026-06-05T10:00:00',
+      updatedAt: '2026-06-05T10:00:00'
     },
     {
       id: 2,
       recipeId: 2,
-      title: '圣诞限定巧克力蛋糕',
+      title: '周末巧克力熔岩蛋糕',
       maxQuantity: 20,
       currentQuantity: 20,
-      pickupTime: '2024-12-25T10:00:00',
+      waitlistQuantity: 3,
+      pickupTime: '2026-06-09T10:00:00',
+      productionDeadline: '2026-06-09T08:00:00',
+      dailyBatches: 2,
+      allowWaitlist: true,
+      timeSlots: [
+        { id: 1, time: '09:30', capacity: 10, filled: 10 },
+        { id: 2, time: '11:00', capacity: 10, filled: 10 }
+      ],
       paymentMethod: 'alipay',
-      status: 'closed',
+      status: 'active',
       unitPrice: 58,
-      createdAt: '2024-12-18T10:00:00',
-      updatedAt: '2024-12-18T10:00:00'
+      createdAt: '2026-06-03T10:00:00',
+      updatedAt: '2026-06-03T10:00:00'
     },
     {
       id: 3,
@@ -137,12 +153,20 @@ export const mockData: Database = {
       title: '周末抹茶红豆包',
       maxQuantity: 25,
       currentQuantity: 12,
-      pickupTime: '2024-12-29T14:00:00',
+      waitlistQuantity: 0,
+      pickupTime: '2026-06-04T14:00:00',
+      productionDeadline: '2026-06-04T09:00:00',
+      dailyBatches: 4,
+      allowWaitlist: false,
+      timeSlots: [
+        { id: 1, time: '13:00', capacity: 13, filled: 6 },
+        { id: 2, time: '15:00', capacity: 12, filled: 6 }
+      ],
       paymentMethod: 'cash',
-      status: 'closed',
+      status: 'completed',
       unitPrice: 28,
-      createdAt: '2024-12-15T10:00:00',
-      updatedAt: '2024-12-15T10:00:00'
+      createdAt: '2026-05-30T10:00:00',
+      updatedAt: '2026-06-04T18:00:00'
     },
     {
       id: 4,
@@ -150,12 +174,20 @@ export const mockData: Database = {
       title: '新年提拉米苏团购',
       maxQuantity: 15,
       currentQuantity: 6,
-      pickupTime: '2024-12-31T16:00:00',
+      waitlistQuantity: 0,
+      pickupTime: '2026-06-12T16:00:00',
+      productionDeadline: '2026-06-12T12:00:00',
+      dailyBatches: 2,
+      allowWaitlist: true,
+      timeSlots: [
+        { id: 1, time: '15:00', capacity: 8, filled: 3 },
+        { id: 2, time: '17:00', capacity: 7, filled: 3 }
+      ],
       paymentMethod: 'wechat',
       status: 'active',
       unitPrice: 88,
-      createdAt: '2024-12-22T10:00:00',
-      updatedAt: '2024-12-22T10:00:00'
+      createdAt: '2026-06-06T10:00:00',
+      updatedAt: '2026-06-06T10:00:00'
     }
   ],
   orders: [
@@ -168,8 +200,10 @@ export const mockData: Database = {
       quantity: 2,
       totalAmount: 76,
       status: 'completed',
-      createdAt: '2024-12-20T12:00:00',
-      updatedAt: '2024-12-20T12:00:00'
+      pickedUpAt: '2026-06-04T14:30:00',
+      timeSlotId: 1,
+      createdAt: '2026-06-05T12:00:00',
+      updatedAt: '2026-06-04T14:30:00'
     },
     {
       id: 1002,
@@ -179,9 +213,10 @@ export const mockData: Database = {
       phone: '13800138002',
       quantity: 3,
       totalAmount: 114,
-      status: 'paid',
-      createdAt: '2024-12-21T09:30:00',
-      updatedAt: '2024-12-21T09:30:00'
+      status: 'to_produce',
+      timeSlotId: 2,
+      createdAt: '2026-06-06T09:30:00',
+      updatedAt: '2026-06-06T09:35:00'
     },
     {
       id: 1003,
@@ -191,9 +226,10 @@ export const mockData: Database = {
       phone: '13800138003',
       quantity: 1,
       totalAmount: 58,
-      status: 'pending',
-      createdAt: '2024-12-22T14:20:00',
-      updatedAt: '2024-12-22T14:20:00'
+      status: 'waitlisted',
+      waitlistPosition: 1,
+      createdAt: '2026-06-06T14:20:00',
+      updatedAt: '2026-06-06T14:20:00'
     },
     {
       id: 1004,
@@ -203,9 +239,11 @@ export const mockData: Database = {
       phone: '13800138004',
       quantity: 5,
       totalAmount: 190,
-      status: 'completed',
-      createdAt: '2024-12-22T16:45:00',
-      updatedAt: '2024-12-22T16:45:00'
+      status: 'pending_pickup',
+      pickedUpAt: undefined,
+      timeSlotId: 1,
+      createdAt: '2026-06-06T16:45:00',
+      updatedAt: '2026-06-07T10:00:00'
     },
     {
       id: 1005,
@@ -216,20 +254,61 @@ export const mockData: Database = {
       quantity: 4,
       totalAmount: 112,
       status: 'cancelled',
-      createdAt: '2024-12-16T11:00:00',
-      updatedAt: '2024-12-16T11:00:00'
+      createdAt: '2026-05-31T11:00:00',
+      updatedAt: '2026-05-31T15:00:00'
     },
     {
       id: 1006,
-      groupBuyId: 2,
+      groupBuyId: 3,
       userId: 2,
       userName: '阿华',
       phone: '13800138006',
       quantity: 2,
-      totalAmount: 116,
+      totalAmount: 56,
       status: 'completed',
-      createdAt: '2024-12-19T10:00:00',
-      updatedAt: '2024-12-19T10:00:00'
+      pickedUpAt: '2026-06-04T13:30:00',
+      timeSlotId: 1,
+      createdAt: '2026-06-01T10:00:00',
+      updatedAt: '2026-06-04T13:30:00'
+    },
+    {
+      id: 1007,
+      groupBuyId: 2,
+      userId: 3,
+      userName: '小林',
+      phone: '13800138007',
+      quantity: 2,
+      totalAmount: 116,
+      status: 'waitlisted',
+      waitlistPosition: 2,
+      createdAt: '2026-06-06T15:00:00',
+      updatedAt: '2026-06-06T15:00:00'
+    },
+    {
+      id: 1008,
+      groupBuyId: 2,
+      userId: 2,
+      userName: '阿杰',
+      phone: '13800138008',
+      quantity: 1,
+      totalAmount: 58,
+      status: 'waitlisted',
+      waitlistPosition: 3,
+      createdAt: '2026-06-06T16:30:00',
+      updatedAt: '2026-06-06T16:30:00'
+    },
+    {
+      id: 1009,
+      groupBuyId: 3,
+      userId: 1,
+      userName: '老王',
+      phone: '13800138009',
+      quantity: 3,
+      totalAmount: 84,
+      status: 'expired',
+      timeSlotId: 2,
+      createdAt: '2026-06-02T08:00:00',
+      updatedAt: '2026-06-05T00:00:00'
     }
   ],
   reviews: [

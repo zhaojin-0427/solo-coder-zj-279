@@ -8,6 +8,8 @@ export const createReviewRouter = (db: Database) => {
 
   router.get('/', controller.getAllReviews)
   router.get('/user/:userId', controller.getReviewsByUser)
+  router.get('/eligible/:userId', controller.getEligibleOrders)
+  router.get('/eligibility/:orderId', controller.checkReviewEligibility)
   router.post('/', controller.createReview)
 
   return router
