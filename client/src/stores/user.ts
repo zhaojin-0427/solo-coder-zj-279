@@ -34,10 +34,13 @@ export const useUserStore = defineStore('user', () => {
     if (saved) {
       try {
         user.value = JSON.parse(saved)
+        return
       } catch {
         localStorage.removeItem('user')
       }
     }
+    user.value = mockUser
+    localStorage.setItem('user', JSON.stringify(mockUser))
   }
 
   return {

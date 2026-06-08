@@ -94,7 +94,7 @@ export const mockData: Database = {
       id: 6,
       name: '芝士蛋糕',
       description: '浓郁绵密的重芝士蛋糕，芝士味十足，底部酥香，是芝士爱好者的最爱。',
-      imageUrl: 'https://images.unsplash.com/photo-1533134242443-d4fd21536581?w=400',
+      imageUrl: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&q=80',
       ingredients: ['奶油奶酪 300g', '消化饼干 100g', '黄油 50g', '淡奶油 150ml', '鸡蛋 2个', '细砂糖 80g'],
       steps: ['饼干压碎拌黄油做底', '奶酪加糖打顺滑', '加蛋和奶油拌匀', '倒入模具', '水浴法160度烤60分钟'],
       cost: 48,

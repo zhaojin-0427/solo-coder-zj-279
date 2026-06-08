@@ -1,14 +1,25 @@
 import { Request, Response } from 'express'
-import { Database, Review, CreateReviewDto } from '../types'
+import { Database, Review, CreateReviewDto, Order, GroupBuy } from '../types'
 
 export const createReviewController = (db: Database) => {
-  const populateOrder = (review: Review): Review => {
+  const populateOrderWithGroupBuy = (order: Order): Order => {
+    const groupBuy = db.groupBuys.find(g => g.id === order.groupBuyId)
+    let populatedGb: GroupBuy | undefined = groupBuy
+    if (groupBuy) {
+      const recipe = db.recipes.find(r => r.id === groupBuy.recipeId)
+      populatedGb = { ...groupBuy, recipe }
+    }
+    return { ...order, groupBuy: populatedGb }
+  }
+
+  const populateRelations = (review: Review): Review => {
     const order = db.orders.find(o => o.id === review.orderId)
-    return { ...review, order }
+    const populatedOrder = order ? populateOrderWithGroupBuy(order) : undefined
+    return { ...review, order: populatedOrder }
   }
 
   const getAllReviews = (_req: Request, res: Response) => {
-    const result = db.reviews.map(populateOrder)
+    const result = db.reviews.map(populateRelations)
     res.json(result)
   }
 
@@ -16,7 +27,7 @@ export const createReviewController = (db: Database) => {
     const userId = parseInt(req.params.userId)
     const result = db.reviews
       .filter(r => r.userId === userId)
-      .map(populateOrder)
+      .map(populateRelations)
     res.json(result)
   }
 
@@ -41,7 +52,7 @@ export const createReviewController = (db: Database) => {
       createdAt: now
     }
     db.reviews.push(newReview)
-    res.status(201).json(populateOrder(newReview))
+    res.status(201).json(populateRelations(newReview))
   }
 
   return {

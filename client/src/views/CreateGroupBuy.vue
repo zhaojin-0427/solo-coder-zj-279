@@ -143,8 +143,8 @@ const formRef = ref<FormInstance>()
 const recipes = ref<Recipe[]>([])
 const groupBuys = ref<GroupBuy[]>([])
 
-const formData = ref<CreateGroupBuyDto>({
-  recipeId: 0,
+const formData = ref<CreateGroupBuyDto & { recipeId: number | null }>({
+  recipeId: null,
   title: '',
   maxQuantity: 20,
   pickupTime: '',
@@ -162,6 +162,7 @@ const rules: FormRules = {
 }
 
 const selectedRecipe = computed(() => {
+  if (!formData.value.recipeId) return undefined
   return recipes.value.find(r => r.id === formData.value.recipeId)
 })
 
@@ -222,7 +223,8 @@ const fetchData = async () => {
   }
 }
 
-const handleRecipeChange = (id: number) => {
+const handleRecipeChange = (id: number | null) => {
+  if (!id) return
   const recipe = recipes.value.find(r => r.id === id)
   if (recipe && !formData.value.title) {
     formData.value.title = `${recipe.name}接龙`
@@ -236,14 +238,22 @@ const handleSubmit = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
     if (valid) {
+      const payload: CreateGroupBuyDto = {
+        recipeId: formData.value.recipeId as number,
+        title: formData.value.title,
+        maxQuantity: formData.value.maxQuantity,
+        pickupTime: formData.value.pickupTime,
+        paymentMethod: formData.value.paymentMethod,
+        unitPrice: formData.value.unitPrice
+      }
       try {
-        await createGroupBuy(formData.value)
+        await createGroupBuy(payload)
         ElMessage.success('接龙发布成功')
         router.push('/orders')
       } catch {
         const newGb: GroupBuy = {
           id: Date.now(),
-          ...formData.value,
+          ...payload,
           currentQuantity: 0,
           status: 'active',
           recipe: selectedRecipe.value,
